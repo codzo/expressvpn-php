@@ -1,0 +1,12 @@
+{
+    "name": "codzo/expressvpn-php",
+    "description": "PHP library to manage Expressvpn",
+    "require": {
+        "codzo/config": "dev-master"
+    },
+    "autoload": {
+        "psr-4": {
+            "Codzo\\ExpressVPN\\": "src/Codzo/ExpressVPN"
+        }
+    }
+}

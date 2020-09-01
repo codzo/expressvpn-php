@@ -1,0 +1,11 @@
+data/*
+tags
+vendor
+tests/reports/
+config/*
+!config/*.dist
+
+.DS_Store
+.vscode
+.*.swp
+Thumbs.db

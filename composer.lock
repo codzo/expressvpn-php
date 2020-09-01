@@ -1,0 +1,68 @@
+{
+    "_readme": [
+        "This file locks the dependencies of your project to a known state",
+        "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
+        "This file is @generated automatically"
+    ],
+    "content-hash": "8ad7104837d5350d652be6f434f0aaff",
+    "packages": [
+        {
+            "name": "codzo/config",
+            "version": "dev-master",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/codzo/Config.git",
+                "reference": "5c01485ab8bf135ede98cab80f92eec48206cca9"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/codzo/Config/zipball/5c01485ab8bf135ede98cab80f92eec48206cca9",
+                "reference": "5c01485ab8bf135ede98cab80f92eec48206cca9",
+                "shasum": ""
+            },
+            "require": {
+                "php": ">=5.3.0"
+            },
+            "require-dev": {
+                "codzo/phpcodesniffer-git-hook": "*",
+                "phpunit/phpunit": "^6.1"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-0": {
+                    "Codzo\\Config": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "Apache-2.0"
+            ],
+            "authors": [
+                {
+                    "name": "Neil Fan",
+                    "email": "neil.fan@codzo.com",
+                    "homepage": "http://codzo.com",
+                    "role": "Developer"
+                }
+            ],
+            "description": "Configuration handler",
+            "homepage": "https://github.com/codzo/Config",
+            "keywords": [
+                "config",
+                "setting"
+            ],
+            "time": "2020-08-10T12:04:16+00:00"
+        }
+    ],
+    "packages-dev": [],
+    "aliases": [],
+    "minimum-stability": "stable",
+    "stability-flags": {
+        "codzo/config": 20
+    },
+    "prefer-stable": false,
+    "prefer-lowest": false,
+    "platform": [],
+    "platform-dev": [],
+    "plugin-api-version": "1.1.0"
+}
