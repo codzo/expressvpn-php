@@ -102,7 +102,7 @@ class ExpressVPN
                 break;
             }
         }
-        $status = array(
+        $this->status = array(
             'connected' => true,
             'location'  => ($alias ?? $location)
         );
