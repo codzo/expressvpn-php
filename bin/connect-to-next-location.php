@@ -13,6 +13,7 @@ if (!$ev->isConnected()) {
 } else {
     $location = $ev->getConnectedLocation();
     $location_list = array_keys($ev->getAllLocations());
+    $next_location = '';
     while (($next = next($location_list))) {
         if ($next == $location) {
             $next_location = next($location_list) ;

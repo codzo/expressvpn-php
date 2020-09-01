@@ -204,7 +204,7 @@ class ExpressVPN
             */
             for ($i = 2; $i < sizeof($locations); $i++) {
                 $alias = $locations[$i][0];
-                if ($alias) {
+                if ($alias && $alias!=='smart') {
                     $loc_t = array();
                     foreach ($col_names as $k => $col) {
                         $loc_t[$col] = $locations[$i][$k];
