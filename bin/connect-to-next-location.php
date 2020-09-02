@@ -15,24 +15,29 @@ if (!$ev->isConnected()) {
 } else {
     $location = $ev->getConnectedLocation();
     $location_list = array_keys($ev->getAllLocations());
-    $next_location = '';
+
+    // find the location we are connected to
     while (($next = next($location_list))) {
         if ($next == $location) {
-            $next_location = next($location_list) ;
-            if (!$next_location) {
-                // we come to the last location
-                $next_location = first($location_list);
-            }
-
-            // this location is to be skipped
-            if(in_array($next_location, $skip_list)) {
-                continue;
-            }
             break;
         }
     }
-    $ev->connect($next_location);
+
+    // now pointing at current location
+    while (($next = next($location_list))) {
+        if (!$next) {
+            // we come to the last location
+            $next = first($location_list);
+        }
+
+        // check location if to be skipped
+        if(!in_array($next, $skip_list)) {
+            break;
+        }
+    }
+    $ev->connect($next);
 }
+
 $location = $ev->getConnectedLocation(true);
 
 echo date('c') . ' ExpressVPN: connect to ' . $location . PHP_EOL;
