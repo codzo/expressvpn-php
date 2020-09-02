@@ -7,6 +7,8 @@ use Codzo\Config\Config;
 
 chdir(__DIR__ . '/..');
 
+$skip_list = array('in', 'smart');
+
 $ev = new ExpressVPN(new Config());
 if (!$ev->isConnected()) {
     $ev->connect();
@@ -21,8 +23,16 @@ if (!$ev->isConnected()) {
                 // we come to the last location
                 $next_location = first($location_list);
             }
+
+            // this location is to be skipped
+            if(in_array($next_location, $skip_list)) {
+                continue;
+            }
             break;
         }
     }
     $ev->connect($next_location);
 }
+$location = $ev->getConnectedLocation(true);
+
+echo date('c') . ' ExpressVPN: connect to ' . $location . PHP_EOL;
