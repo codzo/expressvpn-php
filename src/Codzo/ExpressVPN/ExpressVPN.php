@@ -17,6 +17,11 @@ class ExpressVPN
     protected $cli;
 
     /**
+     * @var locations to be ignored
+     */
+    protected $skip_alias = array('in', 'smart');
+
+    /**
      * @var array current status
      */
     protected $status;
@@ -44,7 +49,10 @@ class ExpressVPN
     public function connect($location = '')
     {
         // check if location is valid
-        if ($location && !key_exists($location, $this->getAllLocations())) {
+        if ($location
+            && $location!=='smart'
+            && !key_exists($location, $this->getAllLocations())
+        ) {
             throw new InvalidLocationException($location);
         }
 
@@ -204,7 +212,7 @@ class ExpressVPN
             */
             for ($i = 2; $i < sizeof($locations); $i++) {
                 $alias = $locations[$i][0];
-                if ($alias) {
+                if ($alias && !in_array($alias, $this->skip_alias)) {
                     $loc_t = array();
                     foreach ($col_names as $k => $col) {
                         $loc_t[$col] = $locations[$i][$k];

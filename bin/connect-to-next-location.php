@@ -7,8 +7,6 @@ use Codzo\Config\Config;
 
 chdir(__DIR__ . '/..');
 
-$skip_list = array('in', 'smart');
-
 $ev = new ExpressVPN(new Config());
 if (!$ev->isConnected()) {
     $ev->connect();
@@ -23,18 +21,15 @@ if (!$ev->isConnected()) {
         }
     }
 
-    // now pointing at current location
-    while (($next = next($location_list))) {
-        if (!$next) {
-            // we come to the last location
-            $next = first($location_list);
-        }
-
-        // check location if to be skipped
-        if(!in_array($next, $skip_list)) {
-            break;
-        }
+    if($next) {
+        // now pointing at current location
+        $next = next($location_list);
     }
+
+    if(!$next) {
+        // come to the end of list, default to 'smart'
+        $next = 'smart';
+    } 
     $ev->connect($next);
 }
 
