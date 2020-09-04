@@ -2,7 +2,7 @@
 
 namespace Codzo\ExpressVPN;
 
-use Codzo\ExpressVPN\Exception\InvalidLocationException;
+use Codzo\Config\Config;
 
 class ExpressVPN
 {
@@ -17,25 +17,13 @@ class ExpressVPN
     protected $cli;
 
     /**
-     * @var locations to be ignored
-     */
-    protected $skip_alias = array('in', 'smart');
-
-    /**
      * @var array current status
      */
-    protected $status;
+    protected $last_output = array();
 
-    public function __construct($config = null)
+    public function __construct(Config $config)
     {
-        $cli = $config->get('expressvpn.cli');
-        if (!$cli) {
-            $cli = 'expressvpn';
-        }
-        $this->cli = $cli;
-
-        // get all available locations
-        $this->getAllLocations();
+        $this->cli = $config->get('expressvpn.cli', 'expressvpn');
     }
     /**
      * Connect to a location
@@ -48,32 +36,6 @@ class ExpressVPN
      */
     public function connect($location = '')
     {
-        // check if location is valid
-        if ($location
-            && $location!=='smart'
-            && !key_exists($location, $this->getAllLocations())
-        ) {
-            throw new InvalidLocationException($location);
-        }
-
-        // check if already connected
-        $status = $this->status();
-
-        // already connected
-        if ($status['connected']) {
-            // but want to connect to default or same location
-            // do nothing
-            if (!$location || $location == $status['location']) {
-                $this->log(sprintf('Already connected to %s, no action', $status['location']));
-                return 0;
-            }
-
-            // but want to connect to different location
-            // disconnect for now
-            $this->log(sprintf('Already connected to %s, disconnect now', $status['location']));
-            $this->disconnect();
-        }
-
         return $this->exec('connect ' . $location);
     }
 
@@ -84,64 +46,30 @@ class ExpressVPN
 
     /**
      * get current status
-     * @return array ['connected'=>true|false, 'location'=>string]
+     * @return array the output from `expressvpn status`
      */
     public function status()
     {
-        $keyword = 'connected to';
-        $output = array();
-        $this->exec('status', $output);
-
-        $pos = stripos($output[0], $keyword);
-        if ($pos === false) {
-            // not connected
-            $this->status = array(
-                'connected' => false,
-                'location'  => ''
-            );
-            return $this->status;
-        }
-
-        $location = trim(substr($output[0], $pos + strlen($keyword)));
-        $alias = '';
-        foreach (static::$locations_list as $a => $l) {
-            if ($l['location'] == $location) {
-                $alias = $a;
-                break;
-            }
-        }
-        $this->status = array(
-            'connected' => true,
-            'location'  => ($alias ?? $location)
-        );
-        return $this->status;
+        return $this->exec('status');
     }
 
-    public function isConnected($force_reload = false)
+    /**
+     * get output from last command execution
+     */
+    public function getLastOutput()
     {
-        $s = ($force_reload || !($this->status)) ?
-            $this->status() :
-            $this->status ;
-        return $s['connected'];
-    }
-
-    public function getConnectedLocation($force_reload = false)
-    {
-        $s = ($force_reload || !($this->status)) ?
-            $this->status() :
-            $this->status ;
-        return $s['location'];
+        return $this->last_output;
     }
 
     /**
      * execute a command
+     * Output to STDOUT will be stored in $this->last_output
      *
      * @param $args   string cmd args
-     * @param $output array  var to store cmd output
      *
      * @return int the execute status code
      */
-    protected function exec(string $args, &$output = null)
+    protected function exec(string $args)
     {
         $cmd = sprintf(
             '%s %s',
@@ -150,22 +78,23 @@ class ExpressVPN
         );
         $this->log('Execute: ' . $cmd);
 
-        $return_var = null;
-        \exec($cmd, $output, $return_var);
+        $rv = null;
+        $this->last_output = array();
+        \exec($cmd, $this->last_output, $rv);
         
-        $this->log('Returned status: ' . $return_var);
+        $this->log('Returned code: ' . $rv);
 
-        if ($output) {
+        if ($this->last_output) {
             $this->log('Output from command line:');
-            foreach ($output as $k => $l) {
-                $output[$k] = preg_replace('/[^[:print:]]/', '', $l);
-                $this->log($output[$k]);
+            foreach ($this->last_output as $k => $l) {
+                $this->last_output[$k] = preg_replace('/[^[:print:]]/', '', $l);
+                $this->log("\t" . $this->last_output[$k]);
             }
         } else {
-            $this->log('No output from command line.');
+            $this->log('No output from command line');
         }
 
-        return $return_var;
+        return $rv;
     }
 
     protected function log($log)
@@ -178,50 +107,27 @@ class ExpressVPN
     }
 
     /**
-     * parse the output from command help
+     * get all location alias
      * Note line 1 and 2 carry no actual data and omitted from return data
      *
      * @param $help_output array
      * @return array parsed data
      */
-    public function getAllLocations()
+    public function getLocations()
     {
         if (!static::$locations_list) {
             $help_output = array();
-            $rv = $this->exec('list all', $help_output);
-
-            $sections = array();
-            preg_match_all('/-+ */', $help_output[1], $sections);
-            $cs = array_map('strlen', $sections[0]);
-
-            $locations = array();
-            foreach ($help_output as $l) {
-                $p = 0;
-                $loc = array();
-                foreach ($cs as $n) {
-                    $loc[] = trim(substr($l, $p, $n));
-                    $p += $n;
-                }
-                $locations[] = $loc;
-            }
-
-            $col_names = array_map('strtolower', $locations[0]);
-            $output = array();
-            /**
-            * ignore first 2 lines
-            */
-            for ($i = 2; $i < sizeof($locations); $i++) {
-                $alias = $locations[$i][0];
-                if ($alias && !in_array($alias, $this->skip_alias)) {
-                    $loc_t = array();
-                    foreach ($col_names as $k => $col) {
-                        $loc_t[$col] = $locations[$i][$k];
+            \exec(escapeshellcmd($this->cli) . ' list all', $help_output);
+            if(sizeof($help_output)>2) {
+                // remove first two lines
+                $help_output = array_slice($help_output, 2);
+                foreach( $help_output as $l) {
+                    list($alias,) = explode(' ', $l);
+                    if($alias) {
+                        static::$locations_list[] = $alias;
                     }
-                    $output[$alias] = $loc_t;
                 }
             }
-
-            static::$locations_list = $output;
         }
         return static::$locations_list ;
     }
